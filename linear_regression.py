@@ -1,4 +1,3 @@
-
 import numpy as np
 from typing import NoReturn
 
@@ -31,7 +30,9 @@ class LinearRegression:
         include_intercept: bool, default=True
             Should fitted model include an intercept or not
         """
-        pass
+        self.fitted_ = False
+        self.include_intercept_ = include_intercept
+        self.coefs_ = None
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
@@ -49,7 +50,13 @@ class LinearRegression:
         -----
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
-        pass
+        if self.include_intercept_:
+            X = np.hstack((np.ones((X.shape[0], 1)), X))  # Add a column of ones to X
+        self.coefs_ = np.linalg.inv(X.T @ X) @ X.T @ y  # are we assuming that X is full rank?
+        # finding the optimal solution for RSS.
+        # first we compute the multiplication of X transposed and X, then we compute the inverse of that matrix,
+        # then we multiply that by X transposed and y, which gives us the coefficients
+        self.fitted_ = True
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -65,7 +72,12 @@ class LinearRegression:
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        pass
+
+        # assuming the model is fitted
+        if self.include_intercept_:
+            X = np.hstack((np.ones((X.shape[0], 1)), X))
+
+        return X @ self.coefs_
 
     def loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -84,4 +96,6 @@ class LinearRegression:
         loss : float
             Performance under MSE loss function
         """
-        pass
+        y_pred = self.predict(X)  # predict the values of y
+        mse = np.mean((y - y_pred) * (y - y_pred))
+        return mse
