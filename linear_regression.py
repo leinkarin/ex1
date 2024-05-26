@@ -1,6 +1,10 @@
 import numpy as np
 from typing import NoReturn
 
+from sklearn.metrics import mean_squared_error
+
+from sol.loss_functions import mean_square_error
+
 
 class LinearRegression:
     """
@@ -30,7 +34,7 @@ class LinearRegression:
         include_intercept: bool, default=True
             Should fitted model include an intercept or not
         """
-        self.fitted_ = False
+        super().__init__()
         self.include_intercept_ = include_intercept
         self.coefs_ = None
 
@@ -51,12 +55,10 @@ class LinearRegression:
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
         if self.include_intercept_:
-            X = np.hstack((np.ones((X.shape[0], 1)), X))  # Add a column of ones to X
-        self.coefs_ = np.linalg.inv(X.T @ X) @ X.T @ y  # are we assuming that X is full rank?
+            X = np.c_[np.ones(X.shape[0]), X]  # Add a column of ones to X
+        self.coefs_ = np.linalg.pinv(X) @ y  # the function pinv computes the Moore-Penrose pseudoinverse of a matrix X
         # finding the optimal solution for RSS.
-        # first we compute the multiplication of X transposed and X, then we compute the inverse of that matrix,
-        # then we multiply that by X transposed and y, which gives us the coefficients
-        self.fitted_ = True
+        # this operation yields the coefficients w in the equation w = (X^T X)^-1 X^T y
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -75,7 +77,7 @@ class LinearRegression:
 
         # assuming the model is fitted
         if self.include_intercept_:
-            X = np.hstack((np.ones((X.shape[0], 1)), X))
+            X = np.c_[np.ones(X.shape[0]), X]  # Add a column of ones to X
 
         return X @ self.coefs_
 
@@ -97,5 +99,5 @@ class LinearRegression:
             Performance under MSE loss function
         """
         y_pred = self.predict(X)  # predict the values of y
-        mse = np.mean((y - y_pred) * (y - y_pred))
+        mse = mean_square_error(y, y_pred)
         return mse
