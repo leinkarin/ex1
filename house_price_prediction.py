@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import os
+
+from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from datetime import datetime
 import plotly.express as px
@@ -30,12 +32,13 @@ def preprocess_train(X: pd.DataFrame, y: pd.Series):
     df = df.dropna().drop_duplicates()
 
     # Dropping redundant features
-    df = df.drop(columns=['id', 'date', 'sqft_living', 'sqft_lot'])
+    df = df.drop(columns=['id', 'date'])
 
     # Removing rows where the features are less than zero
     df = df[df['sqft_above'] >= 0]
     df = df[df['sqft_basement'] >= 0]
     df = df[df['sqft_living15'] >= 0]
+    df = df[df['sqft_living'] >= 0]
     df = df[df['bedrooms'] >= 0]
     df = df[df['bathrooms'] >= 0]
     df = df[df['floors'] >= 0]
@@ -44,12 +47,13 @@ def preprocess_train(X: pd.DataFrame, y: pd.Series):
 
     # Removing rows where the features are equal to zero or less
     df = df[df['sqft_lot15'] > 0]
+    df = df[df['sqft_lot'] > 0]
 
     # Removing rows where the features are not in the specified range
     df = df[df['waterfront'].isin([0, 1])]
-    df = df[df['view'].isin(range(5))]
-    df = df[df['condition'].isin(range(1, 5))]
-    df = df[df['grade'].isin(range(1, 15))]
+    df = df[df['view'].isin(range(5))]  # 0-4
+    df = df[df['condition'].isin(range(1, 6))]  # 1-5
+    df = df[df['grade'].isin(range(1, 14))]  # 1-13
 
     # Removing rows where year built is greater than year renovated, only if yr_renovated is non-zero
     df = df[(df['yr_renovated'] == 0) | (df['yr_built'] <= df['yr_renovated'])]
@@ -78,19 +82,17 @@ def preprocess_test(X: pd.DataFrame):
     A preprocessed version of the test data that matches the coefficients format.
     """
 
-    # Combine X and y into a single DataFrame
-    X_processed = X.copy()  # Use copy to avoid modifying X directly
-
-    X_processed = X_processed.dropna().drop_duplicates()
+    df = X.copy()  # Use copy to avoid modifying X directly
 
     # Dropping redundant features
-    X_processed = X_processed.drop(columns=['id', 'date', 'sqft_living', 'sqft_lot'])
+    df = df.drop(columns=['id', 'date'])
 
+    # Adding features
     current_year = datetime.now().year
-    X_processed['house_age'] = X_processed['yr_built'].apply(lambda x: current_year - x)
-    X_processed['is_renovated'] = X_processed['yr_renovated'].apply(lambda x: 1 if x > 0 else 0)
+    df['house_age'] = df['yr_built'].apply(lambda x: current_year - x)
+    df['is_renovated'] = df['yr_renovated'].apply(lambda x: 1 if x > 0 else 0)
 
-    return X_processed
+    return df
 
 
 def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") -> NoReturn:
@@ -120,13 +122,24 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
         y_std = np.std(y)
         rho = covariance / (X_std * y_std)
 
-        fig = px.scatter(pd.DataFrame({'x': X[feature], 'y': y}), x="x", y="y", trendline="ols",
-                         color_discrete_sequence=["black"],
-                         title=f"Correlation Between {feature} Values and Response <br>Pearson Correlation {rho}",
-                         labels={"x": f"{feature} Values", "y": "Response Values"})
+        # fig = px.scatter(
+        #     x=X[feature],
+        #     y=y,
+        #     title=f"Correlation Between {feature} Values and Response <br>Pearson Correlation {rho}",
+        #     labels={"x": f"{feature} Values", "y": "Response Values"}
+        # )
+        # print(f"Correlation Between {feature} Values and Response <br>Pearson Correlation {rho}")
+        # # Save plot as image
+        # fig.write_image(f"{output_path}/{feature}.png")
+        # print(f"Saved plot for feature {feature} at {output_path}/{feature}.png")
 
-        # Save plot as image
-        fig.write_image(f"{output_path}/{feature}.png")
+        plt.figure()
+        plt.scatter(X[feature], y, alpha=0.5)
+        plt.title(f"Correlation Between {feature} Values and Response\nPearson Correlation: {rho:.2f}")
+        plt.xlabel(f"{feature} Values")
+        plt.ylabel("Response Values")
+        plt.savefig(f"{output_path}/{feature}.png")
+        plt.close()
 
 
 def question_6(X_train, X_test, y_train, y_test, output_path="."):
@@ -138,15 +151,15 @@ def question_6(X_train, X_test, y_train, y_test, output_path="."):
         losses = []
         for i in range(10):
             # Sample p% of the overall training data
-            X_sample = X_train.sample(frac=p / 100)
-            y_sample = y_train.loc[X_sample.index]  # sample the corresponding y values
+            X_sampled = X_train.sample(frac=p / 100)
+            y_sampled = y_train.loc[X_sampled.index]  # sample the corresponding y values
 
             # Fit linear model (including intercept) over sampled set
             model = LinearRegression(include_intercept=True)
-            model.fit(X_sample, y_sample)
+            model.fit(X_sampled, y_sampled)
 
             # Store average and variance of loss over test set
-            loss = model.loss(X_test, y_test)
+            loss = model.loss(X_test.values, y_test)
             losses.append(loss)
 
         mean_losses.append(np.mean(losses))
@@ -162,38 +175,20 @@ def question_6(X_train, X_test, y_train, y_test, output_path="."):
 
 def plot_question_6(mean_losses, upper_bound, lower_bound, output_path):
     percentages = np.arange(10, 101)
-    fig = go.Figure([
-        go.Scatter(
-            x=percentages, y=mean_losses,
-            mode='lines+markers',
-            name='Mean Loss'
-        ),
-        go.Scatter(
-            x=percentages, y=upper_bound,
-            mode='lines',
-            line=dict(width=0),
-            showlegend=False
-        ),
-        go.Scatter(
-            x=percentages, y=lower_bound,
-            mode='lines',
-            line=dict(width=0),
-            fill='tonexty',
-            fillcolor='rgba(0,100,80,0.2)',
-            showlegend=False
-        )
-    ])
 
-    fig.update_layout(
-        title="Mean Loss vs. Training Set Percentage",
-        xaxis_title="Training Set Percentage",
-        yaxis_title="Mean Loss",
-        template='plotly_white'
-    )
+    plt.figure(figsize=(10, 6))
+    plt.plot(percentages, mean_losses, marker='o', label='Mean Loss')
+    plt.fill_between(percentages, lower_bound, upper_bound, color='skyblue', alpha=0.4)
 
-    # fig.show()
+    plt.title('Mean Loss vs. Training Set Percentage')
+    plt.xlabel('Training Set Percentage')
+    plt.ylabel('Mean Loss')
+    plt.legend()
+    plt.grid(True)
+
     file_path = os.path.join(output_path, "mean_loss_vs_training_percentage.png")
-    fig.write_image(file_path)
+    plt.savefig(file_path)
+    plt.close()
 
 
 if __name__ == '__main__':
@@ -205,6 +200,8 @@ if __name__ == '__main__':
                                                         random_state=42)  # it is important to use the random state but im not if it supposed to be 42
     # Question 3 - preprocessing of housing prices train dataset
     X_train, y_train = preprocess_train(X_train, y_train)
+    # print(X_train.info())
+    # print(y_train.info())
 
     # Question 4 - Feature evaluation of train dataset with respect to response
     current_directory = os.getcwd()
@@ -213,6 +210,7 @@ if __name__ == '__main__':
 
     # Question 5 - preprocess the test data
     X_test = preprocess_test(X_test)
+    X_test = X_test.reindex(columns=X_train.columns, fill_value=0)
 
     # Question 6 - Fit model over increasing percentages of the overall training data
     # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
