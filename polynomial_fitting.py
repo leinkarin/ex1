@@ -7,6 +7,7 @@ class PolynomialFitting(LinearRegression):
     """
     Polynomial Fitting using Least Squares estimation
     """
+
     def __init__(self, k: int):
         """
         Instantiate a polynomial fitting estimator
@@ -16,13 +17,14 @@ class PolynomialFitting(LinearRegression):
         k : int
             Degree of polynomial to fit
         """
-        pass
+        super().__init__(include_intercept=False)
+        self.degree = k
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
         Fit Least Squares model to polynomial transformed samples
 
-        Parameters
+        arameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             Input data to fit an estimator for
@@ -30,7 +32,8 @@ class PolynomialFitting(LinearRegression):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        pass
+        super().fit(self.__transform(X), y)  # For polynomial fitting, we need to create new features that include all
+        # combinations of the original features raised to powers from 0 up to the polynomial degree k
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -46,7 +49,7 @@ class PolynomialFitting(LinearRegression):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        pass
+        return super().predict(self.__transform(X))
 
     def loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -65,7 +68,7 @@ class PolynomialFitting(LinearRegression):
         loss : float
             Performance under MSE loss function
         """
-        pass
+        return super().loss(X, y)  # no need to transform X here? will be transformed in predict?
 
     def __transform(self, X: np.ndarray) -> np.ndarray:
         """
@@ -80,4 +83,5 @@ class PolynomialFitting(LinearRegression):
         transformed: ndarray of shape (n_samples, k+1)
             Vandermonde matrix of given samples up to degree k
         """
-        pass
+        return np.vander(X.flatten(), self.degree + 1, increasing=True)  # Vandermonde matrix of given
+        # samples up to degree k

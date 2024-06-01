@@ -5,10 +5,8 @@ import os
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from datetime import datetime
-import plotly.express as px
 from typing import NoReturn
 from linear_regression import LinearRegression
-import plotly.graph_objects as go
 
 
 def preprocess_train(X: pd.DataFrame, y: pd.Series):
@@ -196,8 +194,7 @@ if __name__ == '__main__':
     X, y = df.drop("price", axis=1), df.price
 
     # Question 2 - split train test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25,
-                                                        random_state=42)  # it is important to use the random state but im not if it supposed to be 42
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
     # Question 3 - preprocessing of housing prices train dataset
     X_train, y_train = preprocess_train(X_train, y_train)
     # print(X_train.info())
