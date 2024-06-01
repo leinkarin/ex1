@@ -31,6 +31,10 @@ def load_data(filename: str) -> pd.DataFrame:
 
 
 def question_3(df_israel):
+    """
+    Investigate how the average daily temperature (‘Temp‘ column) change as a function of the ‘DayOfYear‘.
+    @param df_israel - DataFrame containing daily temperature from Israel
+    """
     temp = df_israel['Temp']
     day_of_year = df_israel['DayOfYear']
     year = df_israel['Year']
@@ -52,7 +56,6 @@ def question_3(df_israel):
     # Group by 'Month' and calculate the standard deviation of 'Temp'
     monthly_std = df_israel.groupby('Month').agg(Std=('Temp', 'std'))
 
-    # Plot the standard deviation as a bar plot
     plt.figure(figsize=(12, 6))
     monthly_std.plot(kind='bar', color='skyblue')
     plt.xlabel('Month')
@@ -63,6 +66,11 @@ def question_3(df_israel):
 
 
 def question_4(df):
+    """
+    Group the samples according to ‘Country‘ and ‘Month‘ and calculate the average and standard deviation of the
+    temperature.
+    @param df - DataFrame containing daily temperature from all countries
+    """
     # Group by 'Country' and 'Month' and calculate average and standard deviation of temperature
     country_month = df.groupby(['Country', 'Month'])['Temp'].agg(['mean', 'std']).reset_index()
 
@@ -81,6 +89,11 @@ def question_4(df):
 
 
 def question_5(X, y):
+    """
+    Fit polynomial models of different degrees and evaluate test error.
+    @param X: samples
+    @param y: target values
+    """
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
 
     losses = {}
@@ -107,6 +120,13 @@ def question_5(X, y):
 
 
 def question_6(df, X, y):
+    """
+    Fit a model over the entire subset of records from Israel using the k chosen in question 5.
+    Then, calculate the test error for each country.
+    @param df: DataFrame containing daily temperature from all countries
+    @param X: samples
+    @param y: target values
+    """
     model = PolynomialFitting(7)
     model.fit(X, y)
 

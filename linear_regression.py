@@ -52,8 +52,8 @@ class LinearRegression:
         """
         if self.include_intercept_:
             X = np.c_[np.ones(X.shape[0]), X]  # Add a column of ones to X
-        self.coefs_ = np.linalg.pinv(X) @ y  # the function pinv computes the Moore-Penrose pseudoinverse of a matrix X
-        # finding the optimal solution for RSS.
+        self.coefs_ = np.linalg.pinv(X) @ y  # The function pinv computes the Moore-Penrose pseudoinverse of a matrix X
+        # Finding the optimal solution for RSS.
         # this operation yields the coefficients w in the equation w = (X^T X)^-1 X^T y
         self.is_fitted_ = True
 

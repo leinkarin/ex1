@@ -120,17 +120,6 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
         y_std = np.std(y)
         rho = covariance / (X_std * y_std)
 
-        # fig = px.scatter(
-        #     x=X[feature],
-        #     y=y,
-        #     title=f"Correlation Between {feature} Values and Response <br>Pearson Correlation {rho}",
-        #     labels={"x": f"{feature} Values", "y": "Response Values"}
-        # )
-        # print(f"Correlation Between {feature} Values and Response <br>Pearson Correlation {rho}")
-        # # Save plot as image
-        # fig.write_image(f"{output_path}/{feature}.png")
-        # print(f"Saved plot for feature {feature} at {output_path}/{feature}.png")
-
         plt.figure()
         plt.scatter(X[feature], y, alpha=0.5)
         plt.title(f"Correlation Between {feature} Values and Response\nPearson Correlation: {rho:.2f}")
@@ -141,6 +130,14 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
 
 
 def question_6(X_train, X_test, y_train, y_test, output_path="."):
+    """
+    Fit model over increasing percentages of the overall training data
+    @param X_train: pd.DataFrame
+    @param X_test: pd.DataFrame
+    @param y_train: pd.Series
+    @param y_test: pd.Series
+    @param output_path: output path to save the plot
+    """
     percentages = np.arange(10, 101)  # 10%, 11%, ..., 100%
     mean_losses = []
     std_losses = []
@@ -172,6 +169,13 @@ def question_6(X_train, X_test, y_train, y_test, output_path="."):
 
 
 def plot_question_6(mean_losses, upper_bound, lower_bound, output_path):
+    """
+    Plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
+    @param mean_losses: np.array
+    @param upper_bound: np.array
+    @param lower_bound: np.array
+    @param output_path: output path to save the plot
+    """
     percentages = np.arange(10, 101)
 
     plt.figure(figsize=(10, 6))
@@ -195,15 +199,14 @@ if __name__ == '__main__':
 
     # Question 2 - split train test
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+
     # Question 3 - preprocessing of housing prices train dataset
     X_train, y_train = preprocess_train(X_train, y_train)
-    # print(X_train.info())
-    # print(y_train.info())
 
     # Question 4 - Feature evaluation of train dataset with respect to response
     current_directory = os.getcwd()
     output_path = os.path.join(current_directory, "output")
-    # feature_evaluation(X_train, y_train, output_path=output_path)
+    feature_evaluation(X_train, y_train, output_path=output_path)
 
     # Question 5 - preprocess the test data
     X_test = preprocess_test(X_test)
